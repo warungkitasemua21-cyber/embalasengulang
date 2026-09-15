@@ -31,6 +31,8 @@ function App(){
    r.readAsArrayBuffer(e.target.files[0])
  }
 
+ const exportPDF=()=>window.print();
+
  const saveHistory=()=>{
    const h=[...history,{tanggal:new Date().toLocaleString("id-ID"),catatan:note}];
    setHistory(h);localStorage.setItem("embalase_history",JSON.stringify(h));setNote("");
@@ -54,6 +56,10 @@ function App(){
  const filteredTahun=tahun.filter(x=>!agen||String(x["Nama Agen"]).toLowerCase().includes(agen.toLowerCase()));
 
  const total=k=>filteredResume.reduce((a,b)=>a+(Number(b[k])||0),0);
+
+ const ranking=[...filteredResume]
+ .sort((a,b)=>(Number(b["Sisa Piutang Embalase (Rp)"])||0)-(Number(a["Sisa Piutang Embalase (Rp)"])||0))
+ .slice(0,10);
 
  const chart=Object.entries(resume.reduce((a,b)=>{
  let k=b.Cabang||"Tidak Ada";a[k]=(a[k]||0)+(Number(b["Sisa Piutang Embalase (Rp)"])||0);return a
@@ -88,6 +94,10 @@ function App(){
  {tab==="Resume Agen"&&<Table data={filteredResume}/>}
  {tab==="Piutang Per Tahun"&&<Table data={filteredTahun}/>}
  {tab==="Detail"&&<Table data={filteredDetail}/>}
+
+ <div className="box"><h2>Top 10 Agen Outstanding Terbesar</h2>
+ {ranking.map((x,i)=><p>{i+1}. {x["Nama Agen"]} - {money(x["Sisa Piutang Embalase (Rp)"])}</p>)}
+ </div>
 
  <div className="box"><h2>Outstanding Embalase per Depo</h2>
  <ResponsiveContainer width="100%" height={300}><BarChart data={chart}><XAxis dataKey="name"/><YAxis/><Tooltip formatter={money}/><Bar dataKey="value"/></BarChart></ResponsiveContainer>
