@@ -22,6 +22,8 @@ function App(){
  const [tab,setTab]=useState("Resume Agen");
  const [history,setHistory]=useState(()=>JSON.parse(localStorage.getItem("embalase_history")||"[]"));
  const [note,setNote]=useState("");
+ const [selectedAgent,setSelectedAgent]=useState("");
+ const [agentHistory,setAgentHistory]=useState(()=>JSON.parse(localStorage.getItem("agent_history")||"{}"));
 
  useEffect(()=>fetch("/default.xlsx").then(r=>r.arrayBuffer()).then(b=>setBook(readBook(b))),[]);
 
@@ -56,6 +58,9 @@ function App(){
  const filteredTahun=tahun.filter(x=>!agen||String(x["Nama Agen"]).toLowerCase().includes(agen.toLowerCase()));
 
  const total=k=>filteredResume.reduce((a,b)=>a+(Number(b[k])||0),0);
+ const totalKrat=total("Total Krat");
+ const totalPeti=total("Total Peti");
+ const totalBotol=total("Total Botol");
 
  const ranking=[...filteredResume]
  .sort((a,b)=>(Number(b["Sisa Piutang Embalase (Rp)"])||0)-(Number(a["Sisa Piutang Embalase (Rp)"])||0))
@@ -80,6 +85,9 @@ function App(){
  <Card t="Surplus Embalase" v={money(total("Surplus Embalase (Rp)"))}/>
  <Card t="Sudah Dibayar" v={money(total("DiBayar Agen (Rp)"))}/>
  <Card t="Sisa Piutang" v={money(total("Sisa Piutang Embalase (Rp)"))}/>
+ <Card t="Total Krat" v={totalKrat.toLocaleString("id-ID")}/>
+ <Card t="Total Peti" v={totalPeti.toLocaleString("id-ID")}/>
+ <Card t="Total Botol" v={totalBotol.toLocaleString("id-ID")}/>
  </div>
 
  <div className="control">
@@ -89,7 +97,24 @@ function App(){
  {history.map(h=><p>{h.tanggal} - {h.catatan}</p>)}
  </div>
 
- <nav>{Object.keys(book).map(x=><button onClick={()=>setTab(x)}>{x}</button>)}</nav>
+ 
+<div className="box">
+<h3>Histori Follow Up Agen</h3>
+<select onChange={e=>setSelectedAgent(e.target.value)}>
+<option value="">Pilih Agen</option>
+{filteredResume.map(a=><option>{a["Nama Agen"]}</option>)}
+</select>
+<input placeholder="Input histori agen..." value={note} onChange={e=>setNote(e.target.value)}/>
+<button onClick={()=>{
+ let h={...agentHistory};
+ h[selectedAgent]=[...(h[selectedAgent]||[]),{tanggal:new Date().toLocaleString("id-ID"),catatan:note}];
+ setAgentHistory(h);
+ localStorage.setItem("agent_history",JSON.stringify(h));
+ setNote("");
+}}>Simpan Histori</button>
+{(agentHistory[selectedAgent]||[]).map(x=><p>{x.tanggal} - {x.catatan}</p>)}
+</div>
+<nav>{Object.keys(book).map(x=><button onClick={()=>setTab(x)}>{x}</button>)}</nav>
 
  {tab==="Resume Agen"&&<Table data={filteredResume}/>}
  {tab==="Piutang Per Tahun"&&<Table data={filteredTahun}/>}
